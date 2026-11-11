@@ -1,0 +1,152 @@
+.blog-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition),
+    border-color var(--transition);
+}
+
+.blog-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+/* Show the focus ring on the whole card when its link is keyboard-focused. */
+.blog-card:has(.blog-card__link:focus-visible) {
+  outline: 3px solid var(--navy-600);
+  outline-offset: 3px;
+}
+
+.blog-card__link:focus-visible {
+  outline: none;
+}
+
+.blog-card__media {
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--color-surface-muted);
+}
+
+.blog-card__media .cover {
+  transition: transform 0.5s ease;
+}
+
+.blog-card:hover .blog-card__media .cover {
+  transform: scale(1.04);
+}
+
+.blog-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 1.25rem 1.35rem 1.35rem;
+}
+
+.blog-card__title {
+  font-size: 1.3rem;
+  line-height: 1.25;
+}
+
+.blog-card__link {
+  text-decoration: none;
+}
+
+/* "Stretched link": makes the entire card clickable with a single link. */
+.blog-card__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.blog-card__excerpt {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.blog-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.blog-card__author {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Lead variant: the big featured story */
+.blog-card--lead .blog-card__media {
+  aspect-ratio: 16 / 9;
+}
+
+.blog-card--lead .blog-card__body {
+  padding: 1.5rem 1.75rem 1.75rem;
+}
+
+.blog-card--lead .blog-card__title {
+  font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.1rem);
+}
+
+.blog-card--lead .blog-card__excerpt {
+  font-size: 1.05rem;
+}
+
+/* Compact variant: image on the left, text on the right */
+.blog-card--compact {
+  flex-direction: row;
+}
+
+.blog-card--compact .blog-card__media {
+  flex: 0 0 38%;
+  aspect-ratio: auto;
+  min-height: 150px;
+}
+
+.blog-card--compact .blog-card__body {
+  padding: 1.1rem 1.25rem;
+}
+
+.blog-card--compact .blog-card__title {
+  font-size: 1.15rem;
+}
+
+@media (max-width: 480px) {
+  .blog-card--compact .blog-card__media {
+    flex-basis: 34%;
+    min-height: 130px;
+  }
+
+  .blog-card--compact .blog-card__body {
+    padding: 0.9rem 1rem;
+  }
+
+  .blog-card--compact .blog-card__title {
+    font-size: 1.05rem;
+  }
+
+  .blog-card--compact .blog-card__meta .avatar {
+    display: none;
+  }
+}

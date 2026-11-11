@@ -1,0 +1,63 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logo__mark {
+  width: 34px;
+  height: 34px;
+}
+
+.logo__mark rect {
+  fill: var(--navy-900);
+}
+
+.logo__mark path {
+  fill: none;
+  stroke: var(--lime-400);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+}
+
+.logo__mark circle {
+  fill: var(--lime-400);
+}
+
+.logo--light .logo__mark rect {
+  fill: var(--lime-400);
+}
+
+.logo--light .logo__mark path {
+  stroke: var(--navy-900);
+}
+
+.logo--light .logo__mark circle {
+  fill: var(--navy-900);
+}
+
+.logo__text {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.logo--light .logo__text {
+  color: var(--white);
+}
+
+.logo--dark .logo__text {
+  color: var(--navy-900);
+}
+
+.logo__dot {
+  color: var(--lime-500);
+}
+
+.logo--light .logo__dot {
+  color: var(--lime-400);
+}

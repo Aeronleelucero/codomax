@@ -1,0 +1,130 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.65rem 1.25rem;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-pill);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color var(--transition),
+    border-color var(--transition),
+    color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Variants */
+.btn--primary {
+  background: var(--lime-400);
+  color: var(--navy-900);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--lime-300);
+  box-shadow: 0 8px 20px -8px rgb(173 220 44 / 0.7);
+}
+
+.btn--dark {
+  background: var(--navy-900);
+  color: var(--white);
+}
+
+.btn--dark:hover:not(:disabled) {
+  background: var(--navy-700);
+}
+
+.btn--secondary {
+  background: var(--white);
+  border-color: var(--color-border-strong);
+  color: var(--navy-900);
+}
+
+.btn--secondary:hover:not(:disabled) {
+  border-color: var(--navy-900);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: inherit;
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: rgb(10 20 40 / 0.06);
+}
+
+.btn--danger {
+  background: var(--red-600);
+  color: var(--white);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: var(--red-700);
+}
+
+.btn--outline-light {
+  background: transparent;
+  border-color: rgb(255 255 255 / 0.3);
+  color: var(--white);
+}
+
+.btn--outline-light:hover:not(:disabled) {
+  border-color: var(--lime-400);
+  color: var(--lime-400);
+}
+
+/* Sizes */
+.btn--sm {
+  min-height: 36px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.875rem;
+}
+
+.btn--lg {
+  min-height: 52px;
+  padding: 0.85rem 1.6rem;
+  font-size: 1rem;
+}
+
+.btn--full {
+  width: 100%;
+}
+
+.btn--icon {
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+}
+
+.btn--icon.btn--sm {
+  width: 36px;
+  min-height: 36px;
+}
+
+.btn__spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
