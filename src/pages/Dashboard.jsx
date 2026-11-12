@@ -12,7 +12,7 @@ import { formatDate, getFirstName } from '../utils/format';
 import './Dashboard.css';
 
 const FILTERS = [
-  { value: 'all', label: 'All posts' },
+  { value: 'all', label: 'All articles' },
   { value: 'published', label: 'Published' },
   { value: 'draft', label: 'Drafts' },
 ];
@@ -55,7 +55,7 @@ export default function Dashboard() {
     try {
       await deleteBlog(postToDelete.id, user.id);
       setPosts((current) => current.filter((post) => post.id !== postToDelete.id));
-      showToast('Post deleted.');
+      showToast('Article deleted.');
       setPostToDelete(null);
     } catch (error) {
       showToast(error.message, 'error');
@@ -70,28 +70,28 @@ export default function Dashboard() {
   }
 
   const stats = [
-    { label: 'Total posts', value: posts.length, icon: 'file', tone: 'navy' },
+    { label: 'Total articles', value: posts.length, icon: 'file', tone: 'navy' },
     { label: 'Published', value: publishedCount, icon: 'send', tone: 'lime' },
     { label: 'Drafts', value: draftCount, icon: 'draft', tone: 'sand' },
   ];
 
   return (
     <div className="dashboard">
-      <title>Dashboard · Codomax</title>
+      <title>Creator Dashboard · Artikly</title>
 
       <header className="dashboard__header">
         <div>
-          <p className="dashboard__eyebrow">Dashboard</p>
+          <p className="dashboard__eyebrow">Creator Dashboard</p>
           <h1 className="dashboard__title">Welcome back, {getFirstName(user.name)}</h1>
-          <p className="dashboard__subtitle">Here’s an overview of everything you’ve written.</p>
+          <p className="dashboard__subtitle">Here’s an overview of every story you’ve written.</p>
         </div>
         <Button to="/create-blog" variant="primary" size="lg">
           <Icon name="plus" size={18} />
-          Create blog
+          Write an Article
         </Button>
       </header>
 
-      <section aria-label="Post statistics" className="stats">
+      <section aria-label="Article statistics" className="stats">
         {stats.map((stat) => (
           <div key={stat.label} className="stat-card">
             <span className={`stat-card__icon stat-card__icon--${stat.tone}`}>
@@ -108,9 +108,9 @@ export default function Dashboard() {
       <section className="posts-panel" aria-labelledby="posts-title">
         <div className="posts-panel__header">
           <h2 id="posts-title" className="posts-panel__title">
-            Your posts
+            My Articles
           </h2>
-          <div className="segmented" role="group" aria-label="Filter posts by status">
+          <div className="segmented" role="group" aria-label="Filter articles by status">
             {FILTERS.map((option) => (
               <button
                 key={option.value}
@@ -126,11 +126,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {status === 'loading' && <LoadingState label="Loading your posts…" />}
+        {status === 'loading' && <LoadingState label="Loading your articles…" />}
 
         {status === 'error' && (
           <ErrorState
-            title="We couldn't load your posts"
+            title="We couldn't load your articles"
             actions={<Button onClick={handleRetry}>Try again</Button>}
           />
         )}
@@ -148,13 +148,13 @@ export default function Dashboard() {
             actions={
               <Button to="/create-blog" variant="dark">
                 <Icon name="plus" size={18} />
-                Write your first post
+                Write your first article
               </Button>
             }
           >
             {posts.length === 0
-              ? 'Your posts will appear here. Start with a draft — you can publish whenever you’re ready.'
-              : 'Posts matching this filter will show up here.'}
+              ? 'Your articles will appear here. Start with a draft — you can publish whenever you’re ready.'
+              : 'Articles matching this filter will show up here.'}
           </EmptyState>
         )}
 
@@ -228,13 +228,13 @@ export default function Dashboard() {
 
       <ConfirmDialog
         open={Boolean(postToDelete)}
-        title="Delete this post?"
+        title="Delete this article?"
         message={
           <>
             <strong>“{postToDelete?.title}”</strong> will be removed for good. This can’t be undone.
           </>
         }
-        confirmLabel="Delete post"
+        confirmLabel="Delete article"
         loading={deleting}
         onConfirm={handleConfirmDelete}
         onCancel={() => setPostToDelete(null)}

@@ -4,8 +4,8 @@
   overflow: hidden;
   padding-block: clamp(3.5rem, 8vw, 6.5rem);
   background:
-    radial-gradient(circle at 85% 10%, rgb(198 242 78 / 0.16), transparent 40%),
-    radial-gradient(circle at 0% 100%, rgb(42 61 99 / 0.6), transparent 50%),
+    radial-gradient(circle at 85% 10%, rgb(163 230 53 / 0.16), transparent 40%),
+    radial-gradient(circle at 0% 100%, rgb(51 71 106 / 0.6), transparent 50%),
     var(--navy-900);
   color: var(--white);
 }
@@ -25,7 +25,7 @@
   display: inline-block;
   margin-bottom: 1.25rem;
   padding: 0.3rem 0.85rem;
-  border: 1px solid rgb(198 242 78 / 0.4);
+  border: 1px solid rgb(163 230 53 / 0.4);
   border-radius: var(--radius-pill);
   color: var(--lime-400);
   font-size: 0.8125rem;
@@ -70,7 +70,7 @@
 
 .hero-search:focus-within {
   box-shadow:
-    0 0 0 4px rgb(198 242 78 / 0.55),
+    0 0 0 4px rgb(163 230 53 / 0.55),
     var(--shadow-lg);
 }
 
@@ -91,7 +91,7 @@
 }
 
 .hero-search__input::placeholder {
-  color: #7c8495;
+  color: #808ca0;
 }
 
 .hero-search__input:focus {
@@ -129,7 +129,7 @@
   padding: 1.5rem;
   border: 1px solid rgb(255 255 255 / 0.1);
   border-radius: var(--radius-xl);
-  background: rgb(17 30 56 / 0.75);
+  background: rgb(23 36 58 / 0.75);
   backdrop-filter: blur(6px);
 }
 
@@ -237,7 +237,7 @@
   padding: clamp(2rem, 5vw, 3.5rem);
   border-radius: var(--radius-xl);
   background:
-    radial-gradient(circle at 100% 0%, rgb(198 242 78 / 0.22), transparent 45%),
+    radial-gradient(circle at 100% 0%, rgb(163 230 53 / 0.22), transparent 45%),
     var(--navy-900);
   color: var(--white);
 }

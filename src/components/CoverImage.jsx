@@ -3,7 +3,7 @@ import './CoverImage.css';
 
 // Shows a cover photo, or a branded placeholder when there is no image or the
 // URL fails to load (broken link, offline, etc.).
-export default function CoverImage({ src, alt = '', label = 'Codomax', className = '' }) {
+export default function CoverImage({ src, alt = '', label = 'Artikly', className = '' }) {
   // Remember which URL failed. If `src` changes, the new URL gets a fresh try
   // without needing an effect to reset the state.
   const [failedSrc, setFailedSrc] = useState(null);

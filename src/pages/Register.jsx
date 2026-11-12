@@ -55,14 +55,14 @@ export default function Register() {
   return (
     <AuthShell
       title="Create your account"
-      subtitle="Start writing and sharing what you learn."
+      subtitle="Join Artikly and give your ideas a voice."
       footer={
         <>
           Already have an account? <Link to="/login">Log in</Link>
         </>
       }
     >
-      <title>Create an account · Codomax</title>
+      <title>Create an account · Artikly</title>
 
       {formError && <Alert variant="error">{formError}</Alert>}
 
@@ -123,8 +123,8 @@ export default function Register() {
       </form>
 
       <p className="auth__mock-note">
-        Mock registration: your account is saved in this browser only. Please don’t reuse a real
-        password.
+        Passwords are stored only as secure bcrypt hashes. This is a development build, so please
+        don’t reuse a password from another site.
       </p>
     </AuthShell>
   );

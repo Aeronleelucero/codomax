@@ -1,10 +1,11 @@
 import Icon from './Icon';
+import { LogoMark } from './Logo';
 import './AuthShell.css';
 
 const HIGHLIGHTS = [
-  'Write in a distraction-free editor',
+  'Write in a calm, distraction-free editor',
   'Save drafts and publish when you are ready',
-  'Manage every post from one dashboard',
+  'Manage every article from your Creator Dashboard',
 ];
 
 // Shared two-column frame for the Login and Register pages.
@@ -13,8 +14,9 @@ export default function AuthShell({ title, subtitle, children, footer }) {
     <div className="auth">
       <div className="container auth__inner">
         <aside className="auth__brand" aria-hidden="true">
+          <LogoMark className="auth__mark" />
           <p className="auth__quote">
-            “The best way to learn something is to <em>write</em> about it.”
+            Every idea deserves a <em>story</em>.
           </p>
           <ul className="auth__highlights">
             {HIGHLIGHTS.map((item) => (

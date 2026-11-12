@@ -61,7 +61,7 @@
 .badge--category {
   background: var(--lime-50);
   color: var(--navy-800);
-  border: 1px solid #e3f3b1;
+  border: 1px solid #d9f99d;
   text-transform: uppercase;
 }
 

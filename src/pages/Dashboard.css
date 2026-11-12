@@ -255,6 +255,17 @@
     height: 38px;
   }
 
+  /* Keep the numbers aligned even when a label wraps onto two lines. */
+  .stat-card > div {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .stat-card__value {
+    margin-top: auto;
+  }
+
   .stat-card__value {
     font-size: 1.6rem;
   }

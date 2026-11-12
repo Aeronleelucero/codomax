@@ -8,7 +8,7 @@ export default function NotFound() {
 
   return (
     <section className="not-found">
-      <title>Page not found · Codomax</title>
+      <title>Page not found · Artikly</title>
       <div className="container">
         <p className="not-found__code" aria-hidden="true">
           4<span>0</span>4
@@ -16,7 +16,7 @@ export default function NotFound() {
         <h1 className="not-found__title">This page wandered off</h1>
         <p className="not-found__text">
           We couldn’t find anything at <strong>{pathname}</strong>. Check the address, or head back
-          to the articles.
+          to the stories.
         </p>
         <div className="not-found__actions">
           <Button to="/" variant="dark">

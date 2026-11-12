@@ -1,18 +1,8 @@
-// MOCK DATA ONLY.
-// Passwords are stored in plain text here because there is no backend yet.
-// A real backend must hash passwords and never send them to the browser.
+// Demo account created on the server by `npm run db:seed` (in backend/).
+// Shown on the Login page so reviewers can try the app quickly.
+// It is a public sample account; real users register their own.
 
 export const DEMO_CREDENTIALS = {
-  email: 'demo@codomax.dev',
-  password: 'codomax123',
+  email: 'demo@artikly.dev',
+  password: 'artikly123',
 };
-
-export const SEED_USERS = [
-  {
-    id: 'user-demo',
-    name: 'Jordan Rivera',
-    email: DEMO_CREDENTIALS.email,
-    password: DEMO_CREDENTIALS.password,
-    createdAt: '2026-08-14T10:00:00.000Z',
-  },
-];

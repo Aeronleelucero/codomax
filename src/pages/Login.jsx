@@ -64,14 +64,14 @@ export default function Login() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Log in to manage your drafts and published posts."
+      subtitle="Log in to keep writing and manage your articles."
       footer={
         <>
-          New to Codomax? <Link to="/register">Create an account</Link>
+          New to Artikly? <Link to="/register">Create an account</Link>
         </>
       }
     >
-      <title>Log in · Codomax</title>
+      <title>Log in · Artikly</title>
 
       {registeredEmail && !formError && (
         <Alert variant="success" title="Account created">
@@ -124,8 +124,7 @@ export default function Login() {
       </div>
 
       <p className="auth__mock-note">
-        Mock authentication: accounts are stored only in this browser until the backend is
-        connected.
+        Your password is checked by the Artikly server and stored only as a secure hash.
       </p>
     </AuthShell>
   );

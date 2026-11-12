@@ -87,19 +87,18 @@ export default function Home() {
 
   return (
     <>
-      <title>Codomax — Ideas and stories for people who build the web</title>
+      <title>Artikly — Every idea deserves a story</title>
 
       {/* Hero ------------------------------------------------------ */}
       <section className="hero">
         <div className="container hero__inner">
           <div className="hero__content">
-            <p className="hero__eyebrow">The Codomax Journal</p>
+            <p className="hero__eyebrow">Every idea deserves a story</p>
             <h1 className="hero__title">
-              Ideas, tutorials &amp; stories for people who <em>build</em> the web.
+              Give Your Ideas a <em>Voice</em>.
             </h1>
             <p className="hero__lead">
-              Practical writing on development, design and the craft of building software — from
-              developers and designers who have been there.
+              Share your thoughts, tell your stories, and discover something worth reading.
             </p>
 
             <form className="hero-search" role="search" onSubmit={handleSearchSubmit}>
@@ -111,7 +110,7 @@ export default function Home() {
                 id="article-search"
                 type="search"
                 className="hero-search__input"
-                placeholder="Search articles, topics or authors…"
+                placeholder="Search stories, topics or writers…"
                 value={query}
                 onChange={(event) => updateFilters({ q: event.target.value })}
                 autoComplete="off"
@@ -141,7 +140,7 @@ export default function Home() {
 
           <aside className="hero-topics" aria-labelledby="hero-topics-title">
             <h2 id="hero-topics-title" className="hero-topics__title">
-              Browse by topic
+              Article categories
             </h2>
             <ul className="hero-topics__list">
               {CATEGORIES.map((category) => (
@@ -185,7 +184,7 @@ export default function Home() {
                   <div>
                     <p className="eyebrow">Editor’s picks</p>
                     <h2 id="featured-title" className="section__title">
-                      Featured stories
+                      Featured Stories
                     </h2>
                   </div>
                 </div>
@@ -214,14 +213,14 @@ export default function Home() {
                 <div>
                   <p className="eyebrow">{isFiltering ? 'Search results' : 'Fresh off the press'}</p>
                   <h2 id="latest-title" className="section__title">
-                    {isFiltering ? 'Matching articles' : 'Latest articles'}
+                    {isFiltering ? 'Matching articles' : 'Latest Stories'}
                   </h2>
                   <p className="section__subtitle" aria-live="polite">
                     {isFiltering
                       ? `${visibleBlogs.length} ${visibleBlogs.length === 1 ? 'article' : 'articles'}${
                           query.trim() ? ` for “${query.trim()}”` : ''
                         }${activeCategory !== ALL_CATEGORIES ? ` in ${activeCategory}` : ''}`
-                      : 'New writing from the Codomax community, newest first.'}
+                      : 'New writing from the Artikly community, newest first.'}
                   </p>
                 </div>
                 {isFiltering && (
@@ -276,13 +275,13 @@ export default function Home() {
         <div className="container">
           <div className="cta__inner">
             <div>
-              <h2 className="cta__title">Have something worth sharing?</h2>
+              <h2 className="cta__title">Your story starts with a single sentence.</h2>
               <p className="cta__text">
-                Write about what you are learning. Draft privately, publish when you are ready.
+                Draft privately, publish when you’re ready, and share your perspective with readers.
               </p>
             </div>
             <Button to={isAuthenticated ? '/create-blog' : '/register'} variant="primary" size="lg">
-              {isAuthenticated ? 'Write a new post' : 'Start writing for free'}
+              {isAuthenticated ? 'Write an Article' : 'Start writing for free'}
               <Icon name="arrowRight" size={18} />
             </Button>
           </div>

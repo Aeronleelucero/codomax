@@ -6,8 +6,10 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
   globalIgnores(['dist']),
+  // React frontend (browser)
   {
     files: ['**/*.{js,jsx}'],
+    ignores: ['backend/**', 'vite.config.js'],
     extends: [
       js.configs.recommended,
       reactHooks.configs.flat.recommended,
@@ -16,6 +18,15 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+  },
+  // Express backend and build config (Node.js)
+  {
+    files: ['backend/**/*.js', 'vite.config.js'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      globals: globals.node,
+      sourceType: 'module',
     },
   },
 ])

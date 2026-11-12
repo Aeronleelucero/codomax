@@ -1,19 +1,22 @@
-// Sample articles used to seed browser storage the first time the app runs.
-// The shape of each object matches what a future API is expected to return.
+// Sample articles inserted by `npm run db:seed`.
+// (Moved from the frontend's former mock data in src/data/blogs.js.)
+//
+// `authorId` refers to a key in SEED_AUTHORS (see ./authors.js), not a
+// database id. The `id` values are only used as stable labels in logs.
 //
 // Content format: blank lines separate blocks, "## " starts a heading and
-// lines beginning with "- " form a bullet list (see src/utils/content.js).
+// lines beginning with "- " form a bullet list.
 
 const cover = (seed) => `https://picsum.photos/seed/${seed}/1200/750`;
 
-export const SEED_BLOGS = [
+export const SEED_ARTICLES = [
   {
     id: 'post-accessible-forms',
     title: 'Building Accessible Forms in React Without the Headaches',
     excerpt:
       'Labels, error messages and focus management make or break a form. Here is the practical checklist I use on every React project.',
     category: 'Development',
-    coverImage: cover('codomax-forms'),
+    coverImage: cover('artikly-forms'),
     authorId: 'user-priya',
     authorName: 'Priya Nair',
     status: 'published',
@@ -40,7 +43,7 @@ export const SEED_BLOGS = [
     excerpt:
       'A limited palette forces clearer decisions about hierarchy, emphasis and meaning. This is how I design interfaces with only a few colors.',
     category: 'Design',
-    coverImage: cover('codomax-palette'),
+    coverImage: cover('artikly-palette'),
     authorId: 'user-elena',
     authorName: 'Elena Petrova',
     status: 'published',
@@ -67,7 +70,7 @@ export const SEED_BLOGS = [
     excerpt:
       'Not the frameworks or the algorithms. The lessons that stuck were about asking questions, reading other people’s code and shipping small.',
     category: 'Career',
-    coverImage: cover('codomax-junior'),
+    coverImage: cover('artikly-junior'),
     authorId: 'user-samuel',
     authorName: 'Samuel Okafor',
     status: 'published',
@@ -93,7 +96,7 @@ export const SEED_BLOGS = [
     excerpt:
       'Most side projects die from a never-ending feature list. Splitting ideas into “launch” and “later” is the simplest fix I have found.',
     category: 'Productivity',
-    coverImage: cover('codomax-notebook'),
+    coverImage: cover('artikly-notebook'),
     authorId: 'user-marcus',
     authorName: 'Marcus Chen',
     status: 'published',
@@ -117,7 +120,7 @@ export const SEED_BLOGS = [
     excerpt:
       'Parsing, styling, layout and paint: a beginner-friendly tour of the rendering pipeline, and why it matters for performance.',
     category: 'Technology',
-    coverImage: cover('codomax-pixels'),
+    coverImage: cover('artikly-pixels'),
     authorId: 'user-demo',
     authorName: 'Jordan Rivera',
     status: 'published',
@@ -143,7 +146,7 @@ export const SEED_BLOGS = [
     excerpt:
       'Both are powerful, and both can build most layouts. Asking one question about your content makes the choice easy almost every time.',
     category: 'Development',
-    coverImage: cover('codomax-grid'),
+    coverImage: cover('artikly-grid'),
     authorId: 'user-demo',
     authorName: 'Jordan Rivera',
     status: 'published',
@@ -168,7 +171,7 @@ export const SEED_BLOGS = [
     excerpt:
       'Working from home blurred the line between work and everything else. These five tiny habits helped me draw it again.',
     category: 'Lifestyle',
-    coverImage: cover('codomax-homeoffice'),
+    coverImage: cover('artikly-homeoffice'),
     authorId: 'user-hana',
     authorName: 'Hana Kobayashi',
     status: 'published',
@@ -192,7 +195,7 @@ export const SEED_BLOGS = [
     excerpt:
       'Caching bugs, CORS errors and mysterious redirects usually explain themselves — if you know where to look in the network tab.',
     category: 'Technology',
-    coverImage: cover('codomax-network'),
+    coverImage: cover('artikly-network'),
     authorId: 'user-marcus',
     authorName: 'Marcus Chen',
     status: 'published',
@@ -217,7 +220,7 @@ export const SEED_BLOGS = [
     excerpt:
       'Your README is the front door of your project. A clear structure helps visitors understand, install and contribute in minutes.',
     category: 'Development',
-    coverImage: cover('codomax-docs'),
+    coverImage: cover('artikly-docs'),
     authorId: 'user-priya',
     authorName: 'Priya Nair',
     status: 'published',
@@ -242,7 +245,7 @@ export const SEED_BLOGS = [
     excerpt:
       'Before reaching for a library, try lifting state, using context sparingly and keeping derived values out of state.',
     category: 'Development',
-    coverImage: cover('codomax-state'),
+    coverImage: cover('artikly-state'),
     authorId: 'user-demo',
     authorName: 'Jordan Rivera',
     status: 'draft',

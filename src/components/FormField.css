@@ -43,7 +43,7 @@
 }
 
 .field__control::placeholder {
-  color: #8a92a2;
+  color: #808ca0;
 }
 
 .field__control:hover {
@@ -53,7 +53,7 @@
 .field__control:focus {
   outline: none;
   border-color: var(--navy-900);
-  box-shadow: 0 0 0 4px rgb(198 242 78 / 0.55);
+  box-shadow: 0 0 0 4px rgb(163 230 53 / 0.55);
 }
 
 textarea.field__control {

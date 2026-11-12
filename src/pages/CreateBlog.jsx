@@ -49,9 +49,9 @@ export default function CreateBlog() {
 
     let message;
     if (values.status === 'published') {
-      message = isEditing && wasPublished ? 'Post updated.' : 'Your post is now published!';
+      message = isEditing && wasPublished ? 'Article updated.' : 'Your article is now published!';
     } else {
-      message = wasPublished ? 'Post unpublished and saved as a draft.' : 'Draft saved.';
+      message = wasPublished ? 'Article unpublished and saved as a draft.' : 'Draft saved.';
     }
     showToast(message);
     navigate('/dashboard');
@@ -60,16 +60,16 @@ export default function CreateBlog() {
   const goToDashboard = () => navigate('/dashboard');
 
   if (isEditing && loaded?.requestedId !== id) {
-    return <LoadingState label="Loading your post…" />;
+    return <LoadingState label="Loading your article…" />;
   }
 
   if (isEditing && !loaded.blog) {
     return (
       <>
-        <title>Post not found · Codomax</title>
+        <title>Article not found · Artikly</title>
         <EmptyState
           icon="file"
-          title="We couldn’t open this post"
+          title="We couldn’t open this article"
           actions={<Button to="/dashboard">Back to dashboard</Button>}
         >
           It may have been deleted, or it belongs to another writer.
@@ -80,22 +80,22 @@ export default function CreateBlog() {
 
   return (
     <div className="create-blog">
-      <title>{isEditing ? 'Edit post · Codomax' : 'New post · Codomax'}</title>
+      <title>{isEditing ? 'Edit Article · Artikly' : 'Write an Article · Artikly'}</title>
 
       <header className="create-blog__header">
         <Link to="/dashboard" className="create-blog__back">
           <Icon name="arrowLeft" size={18} />
           Back to dashboard
         </Link>
-        <h1 className="create-blog__title">{isEditing ? 'Edit post' : 'Write a new post'}</h1>
+        <h1 className="create-blog__title">{isEditing ? 'Edit Article' : 'Write an Article'}</h1>
         <p className="create-blog__subtitle">
           {isEditing
             ? 'Update your article, then save it as a draft or publish your changes.'
-            : 'Share what you know. Save a draft at any time and publish when it’s ready.'}
+            : 'Every idea deserves a story. Save a draft at any time and publish when it’s ready.'}
         </p>
       </header>
 
-      {/* The key gives each post its own fresh form state. */}
+      {/* The key gives each article its own fresh form state. */}
       <BlogForm
         key={id ?? 'new'}
         initialBlog={isEditing ? loaded?.blog : undefined}

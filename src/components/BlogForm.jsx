@@ -90,7 +90,7 @@ export default function BlogForm({ initialBlog, onSave, onCancel }) {
   }
 
   const statusBadge = !initialBlog
-    ? { className: 'badge--new', label: 'New post' }
+    ? { className: 'badge--new', label: 'New article' }
     : isPublished
       ? { className: 'badge--published', label: 'Published' }
       : { className: 'badge--draft', label: 'Draft' };
@@ -167,7 +167,7 @@ export default function BlogForm({ initialBlog, onSave, onCancel }) {
               label="Content"
               className="field--editor"
               rows={16}
-              placeholder={'Start writing your article…\n\nTip: leave a blank line between paragraphs.'}
+              placeholder={'Start writing your story…\n\nTip: leave a blank line between paragraphs.'}
               hint="Formatting: blank line = new paragraph · “## ” = heading · “- ” = bullet point."
               value={values.content}
               onChange={handleChange}
@@ -282,7 +282,7 @@ export default function BlogForm({ initialBlog, onSave, onCancel }) {
               disabled={isSaving}
             >
               <Icon name="send" size={16} />
-              {isPublished ? 'Update post' : 'Publish post'}
+              {isPublished ? 'Update Article' : 'Publish Article'}
             </Button>
             <Button
               variant="secondary"

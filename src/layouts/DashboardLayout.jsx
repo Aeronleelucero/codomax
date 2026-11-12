@@ -47,18 +47,18 @@ export default function DashboardLayout() {
           </button>
         </div>
 
-        <nav className="dash-nav" aria-label="Dashboard">
+        <nav className="dash-nav" aria-label="Creator Dashboard">
           <NavLink to="/dashboard" end className={linkClass}>
             <Icon name="grid" size={18} />
             Overview
           </NavLink>
           <NavLink to="/create-blog" className={linkClass}>
             <Icon name="plus" size={18} />
-            New post
+            Write an Article
           </NavLink>
           <Link to="/" className="dash-nav__link">
             <Icon name="home" size={18} />
-            View blog
+            Browse articles
           </Link>
         </nav>
 

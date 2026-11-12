@@ -1,32 +1,34 @@
 /* =========================================================
-   Codomax global styles
+   Artikly global styles
    1. Design tokens   2. Reset & base   3. Typography   4. Utilities
    Component styles live next to each component (e.g. Navbar.css).
    ========================================================= */
 
 /* 1. Design tokens ---------------------------------------- */
 :root {
-  /* Brand palette */
-  --navy-950: #060c18;
-  --navy-900: #0a1428;
-  --navy-800: #111e38;
-  --navy-700: #1b2b4b;
-  --navy-600: #2a3d63;
-  --navy-300: #9aa8c2;
-  --lime-300: #dcfb8a;
-  --lime-400: #c6f24e;
-  --lime-500: #addc2c;
-  --lime-50: #f5fce1;
+  /* Brand palette
+     Midnight Navy #101B2D (primary) · Fresh Lime #A3E635 (accent)
+     Paper White #F8FAFC (background) · Slate Gray #64748B (secondary text) */
+  --navy-950: #0a1220;
+  --navy-900: #101b2d; /* Midnight Navy */
+  --navy-800: #17243a;
+  --navy-700: #22324d;
+  --navy-600: #33476a;
+  --navy-300: #a3b0c6; /* muted text on navy (≈7.8:1 contrast) */
+  --lime-300: #bef264;
+  --lime-400: #a3e635; /* Fresh Lime */
+  --lime-500: #84cc16;
+  --lime-50: #f7fee7;
 
-  /* Neutrals */
+  /* Neutrals (slate scale) */
   --white: #ffffff;
-  --neutral-50: #f7f8f5;
-  --neutral-100: #eff1ec;
-  --neutral-200: #e2e5de;
-  --neutral-300: #cdd2c8;
-  --neutral-500: #5f687a;
-  --neutral-700: #353d4f;
-  --neutral-900: #111827;
+  --neutral-50: #f8fafc; /* Paper White */
+  --neutral-100: #f1f5f9;
+  --neutral-200: #e2e8f0;
+  --neutral-300: #cbd5e1;
+  --neutral-500: #64748b; /* Slate Gray (4.5:1 on Paper White) */
+  --neutral-700: #334155;
+  --neutral-900: #0f172a;
 
   /* Feedback colors */
   --red-50: #fef2f2;
@@ -58,7 +60,7 @@
 
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
 
   /* Shape & depth */
   --radius-sm: 8px;
@@ -66,9 +68,9 @@
   --radius-lg: 18px;
   --radius-xl: 28px;
   --radius-pill: 999px;
-  --shadow-sm: 0 1px 2px rgb(10 20 40 / 0.06), 0 1px 3px rgb(10 20 40 / 0.08);
-  --shadow-md: 0 12px 28px -12px rgb(10 20 40 / 0.22);
-  --shadow-lg: 0 28px 56px -20px rgb(10 20 40 / 0.35);
+  --shadow-sm: 0 1px 2px rgb(16 27 45 / 0.06), 0 1px 3px rgb(16 27 45 / 0.08);
+  --shadow-md: 0 12px 28px -12px rgb(16 27 45 / 0.22);
+  --shadow-lg: 0 28px 56px -20px rgb(16 27 45 / 0.35);
 
   /* Layout */
   --container-width: 1200px;

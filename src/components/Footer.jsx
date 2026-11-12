@@ -14,7 +14,7 @@ export default function Footer() {
         <div className="footer__brand">
           <Logo tone="light" />
           <p className="footer__tagline">
-            Practical ideas, tutorials and stories from people who build the web.
+            Every idea deserves a story. A welcoming home for writers and curious readers.
           </p>
         </div>
 
@@ -38,7 +38,7 @@ export default function Footer() {
                   <Link to="/dashboard">Dashboard</Link>
                 </li>
                 <li>
-                  <Link to="/create-blog">Write a post</Link>
+                  <Link to="/create-blog">Write an article</Link>
                 </li>
               </>
             ) : (
@@ -59,8 +59,8 @@ export default function Footer() {
       </div>
 
       <div className="container footer__bottom">
-        <p>© {year} Codomax. Built for the Datheon Full-Stack Development Internship.</p>
-        <p className="footer__note">Frontend demo · data is stored in your browser only</p>
+        <p>© {year} Artikly. Built for the Datheon Full-Stack Development Internship.</p>
+        <p className="footer__note">Development build · powered by the Artikly API</p>
       </div>
     </footer>
   );

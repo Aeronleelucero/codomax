@@ -58,7 +58,7 @@ export default function BlogDetail() {
   if (!blog || (blog.status !== 'published' && !isOwner)) {
     return (
       <div className="container">
-        <title>Article not found · Codomax</title>
+        <title>Article not found · Artikly</title>
         <EmptyState
           icon="file"
           title="Article not found"
@@ -74,7 +74,7 @@ export default function BlogDetail() {
 
   return (
     <>
-      <title>{`${blog.title} · Codomax`}</title>
+      <title>{`${blog.title} · Artikly`}</title>
 
       <article className="article">
         <header className="article__header container">
@@ -85,7 +85,7 @@ export default function BlogDetail() {
 
           {isDraft && (
             <Alert variant="warning" title="Draft preview">
-              Only you can see this post. Publish it from the editor to make it public.
+              Only you can see this article. Publish it from the editor to make it public.
             </Alert>
           )}
 
@@ -110,7 +110,7 @@ export default function BlogDetail() {
             {isOwner && (
               <Button to={`/edit-blog/${blog.id}`} variant="secondary" size="sm" className="article__edit">
                 <Icon name="edit" size={16} />
-                Edit post
+                Edit article
               </Button>
             )}
           </div>
@@ -118,7 +118,7 @@ export default function BlogDetail() {
 
         <div className="container">
           <div className="article__cover">
-            <CoverImage src={blog.coverImage} alt="" label={blog.category || 'Codomax'} />
+            <CoverImage src={blog.coverImage} alt="" label={blog.category || 'Artikly'} />
           </div>
         </div>
 
