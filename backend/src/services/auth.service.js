@@ -77,7 +77,7 @@ export const registerUser = async (body = {}) => {
   } catch (error) {
     // Two sign-ups with the same email at the same moment can both pass the
     // check above; the UNIQUE index on users.email stops the second one.
-    if (error.code === 'ER_DUP_ENTRY') {
+    if (error.code === '23505') {
       throw new AppError(409, 'An account with this email already exists.', {
         email: 'An account with this email already exists.',
       });

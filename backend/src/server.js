@@ -1,13 +1,14 @@
 import app from './app.js';
-import pool from './config/db.js';
+import pool from './config/postgres.js';
 import { assertServerConfig, env } from './config/env.js';
 
 const startServer = async () => {
   try {
     assertServerConfig();
+
     await pool.query('SELECT 1');
 
-    console.log('MySQL connection verified.');
+    console.log('Supabase PostgreSQL connection verified.');
 
     const server = app.listen(env.port, () => {
       console.log(`
@@ -16,7 +17,7 @@ const startServer = async () => {
 ========================================
  Environment: ${env.nodeEnv}
  Port:        ${env.port}
- Database:    Connected
+ Database:    Supabase PostgreSQL
  Health:      http://localhost:${env.port}/api/health
 ========================================
       `);
@@ -34,6 +35,7 @@ const startServer = async () => {
 
     process.on('SIGINT', () => shutdown('SIGINT'));
     process.on('SIGTERM', () => shutdown('SIGTERM'));
+
   } catch (error) {
     console.error('Backend startup failed:', error.message);
     await pool.end();

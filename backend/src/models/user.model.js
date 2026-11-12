@@ -1,35 +1,37 @@
-import pool from '../config/db.js';
+
+import pool from '../config/postgres.js';
 
 export const findUserByEmail = async (email) => {
-  const [rows] = await pool.execute(
+  const result = await pool.query(
     `SELECT id, full_name, email, password_hash, created_at
      FROM users
-     WHERE email = ?
+     WHERE email = $1
      LIMIT 1`,
     [email]
   );
 
-  return rows[0] || null;
+  return result.rows[0] || null;
 };
 
 export const createUser = async ({ fullName, email, passwordHash }) => {
-  const [result] = await pool.execute(
+  const result = await pool.query(
     `INSERT INTO users (full_name, email, password_hash)
-     VALUES (?, ?, ?)`,
+     VALUES ($1, $2, $3)
+     RETURNING id`,
     [fullName, email, passwordHash]
   );
 
-  return result.insertId;
+  return result.rows[0].id;
 };
 
 export const getPublicUserById = async (id) => {
-  const [rows] = await pool.execute(
+  const result = await pool.query(
     `SELECT id, full_name, email, created_at
      FROM users
-     WHERE id = ?
+     WHERE id = $1
      LIMIT 1`,
     [id]
   );
 
-  return rows[0] || null;
+  return result.rows[0] || null;
 };

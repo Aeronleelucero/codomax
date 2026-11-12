@@ -1,5 +1,6 @@
+
 import { Router } from 'express';
-import pool from '../config/db.js';
+import pool from '../config/postgres.js';
 
 const router = Router();
 
@@ -14,6 +15,7 @@ router.get('/', async (req, res, next) => {
         service: 'Artikly Backend',
         api: 'healthy',
         database: 'connected',
+        databaseProvider: 'Supabase PostgreSQL',
         timestamp: new Date().toISOString(),
       },
     });

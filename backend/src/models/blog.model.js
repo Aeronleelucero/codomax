@@ -1,15 +1,26 @@
-import pool from '../config/db.js';
 
-// All queries use placeholders (?) so user input is never concatenated into SQL.
+import pool from '../config/postgres.js';
 
+// Shared query for articles and author information.
 const SELECT_BLOG = `
-  SELECT b.id, b.author_id, u.full_name AS author_name, b.title, b.excerpt, b.content,
-         b.category, b.cover_image, b.status, b.is_featured, b.published_at,
-         b.created_at, b.updated_at
+  SELECT
+    b.id,
+    b.author_id,
+    u.full_name AS author_name,
+    b.title,
+    b.excerpt,
+    b.content,
+    b.category,
+    b.cover_image,
+    b.status,
+    b.is_featured,
+    b.published_at,
+    b.created_at,
+    b.updated_at
   FROM blogs b
-  INNER JOIN users u ON u.id = b.author_id`;
+  INNER JOIN users u ON u.id = b.author_id
+`;
 
-// Converts a database row into the shape the React frontend already uses.
 export const toBlog = (row) => ({
   id: row.id,
   title: row.title,
@@ -27,54 +38,123 @@ export const toBlog = (row) => ({
 });
 
 export const findPublishedBlogs = async () => {
-  const [rows] = await pool.execute(
+  const result = await pool.query(
     `${SELECT_BLOG}
      WHERE b.status = 'published'
-     ORDER BY b.published_at DESC, b.id DESC`,
+     ORDER BY b.published_at DESC, b.id DESC`
   );
-  return rows.map(toBlog);
+
+  return result.rows.map(toBlog);
 };
 
 export const findBlogById = async (id) => {
-  const [rows] = await pool.execute(`${SELECT_BLOG} WHERE b.id = ? LIMIT 1`, [id]);
-  return rows[0] ? toBlog(rows[0]) : null;
+  const result = await pool.query(
+    `${SELECT_BLOG}
+     WHERE b.id = $1
+     LIMIT 1`,
+    [id]
+  );
+
+  return result.rows[0] ? toBlog(result.rows[0]) : null;
 };
 
 export const findBlogsByAuthor = async (authorId) => {
-  const [rows] = await pool.execute(
+  const result = await pool.query(
     `${SELECT_BLOG}
-     WHERE b.author_id = ?
+     WHERE b.author_id = $1
      ORDER BY b.updated_at DESC, b.id DESC`,
-    [authorId],
+    [authorId]
   );
-  return rows.map(toBlog);
+
+  return result.rows.map(toBlog);
 };
 
-export const insertBlog = async ({ authorId, title, excerpt, content, category, coverImage, status }) => {
-  const [result] = await pool.execute(
-    `INSERT INTO blogs (author_id, title, excerpt, content, category, cover_image, status, published_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, IF(? = 'published', CURRENT_TIMESTAMP, NULL))`,
-    [authorId, title, excerpt, content, category || null, coverImage, status, status],
+export const insertBlog = async ({
+  authorId,
+  title,
+  excerpt,
+  content,
+  category,
+  coverImage,
+  status,
+}) => {
+  const publishedAt =
+    status === 'published' ? new Date() : null;
+
+  const result = await pool.query(
+    `INSERT INTO blogs (
+      author_id,
+      title,
+      excerpt,
+      content,
+      category,
+      cover_image,
+      status,
+      published_at
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    RETURNING id`,
+    [
+      authorId,
+      title,
+      excerpt,
+      content,
+      category || null,
+      coverImage,
+      status,
+      publishedAt,
+    ]
   );
-  return result.insertId;
+
+  return result.rows[0].id;
 };
 
-// `author_id = ?` in the WHERE clause is a second safety net: even if the
-// service's ownership check were bypassed, another user's row can't change.
-export const updateBlogById = async (id, authorId, { title, excerpt, content, category, coverImage, status }) => {
-  const [result] = await pool.execute(
+export const updateBlogById = async (
+  id,
+  authorId,
+  { title, excerpt, content, category, coverImage, status }
+) => {
+  const isPublished = status === 'published';
+
+  const result = await pool.query(
     `UPDATE blogs
-     SET title = ?, excerpt = ?, content = ?, category = ?, cover_image = ?, status = ?,
-         -- keep the original publish date when a live article is edited
-         published_at = IF(? = 'published', COALESCE(published_at, CURRENT_TIMESTAMP), NULL),
-         updated_at = CURRENT_TIMESTAMP
-     WHERE id = ? AND author_id = ?`,
-    [title, excerpt, content, category || null, coverImage, status, status, id, authorId],
+     SET
+       title = $1,
+       excerpt = $2,
+       content = $3,
+       category = $4,
+       cover_image = $5,
+       status = $6,
+       published_at = CASE
+         WHEN $9::boolean = TRUE
+         THEN COALESCE(published_at, CURRENT_TIMESTAMP)
+         ELSE NULL
+       END
+     WHERE id = $7 AND author_id = $8
+     RETURNING id`,
+    [
+      title,
+      excerpt,
+      content,
+      category || null,
+      coverImage,
+      status,
+      id,
+      authorId,
+      isPublished,
+    ]
   );
-  return result.affectedRows > 0;
+
+  return result.rowCount > 0;
 };
 
 export const deleteBlogById = async (id, authorId) => {
-  const [result] = await pool.execute('DELETE FROM blogs WHERE id = ? AND author_id = ?', [id, authorId]);
-  return result.affectedRows > 0;
+  const result = await pool.query(
+    `DELETE FROM blogs
+     WHERE id = $1 AND author_id = $2
+     RETURNING id`,
+    [id, authorId]
+  );
+
+  return result.rowCount > 0;
 };
