@@ -17,7 +17,7 @@ const FILTERS = [
   { value: 'draft', label: 'Drafts' },
 ];
 
-export default function Dashboard() {
+export default function Dashboard({ blogsPage = false }) {
   const { user } = useAuth();
   const { showToast } = useToast();
 
@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     let ignore = false;
-    getBlogsByAuthor(user.id)
+    getBlogsByAuthor()
       .then((data) => {
         if (ignore) return;
         setPosts(data);
@@ -53,7 +53,7 @@ export default function Dashboard() {
   async function handleConfirmDelete() {
     setDeleting(true);
     try {
-      await deleteBlog(postToDelete.id, user.id);
+      await deleteBlog(postToDelete.id);
       setPosts((current) => current.filter((post) => post.id !== postToDelete.id));
       showToast('Article deleted.');
       setPostToDelete(null);
@@ -77,13 +77,13 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
-      <title>Creator Dashboard · Artikly</title>
+      <title>{blogsPage ? 'My Blogs · Artikly' : 'Creator Dashboard · Artikly'}</title>
 
       <header className="dashboard__header">
         <div>
           <p className="dashboard__eyebrow">Creator Dashboard</p>
-          <h1 className="dashboard__title">Welcome back, {getFirstName(user.name)}</h1>
-          <p className="dashboard__subtitle">Here’s an overview of every story you’ve written.</p>
+          <h1 className="dashboard__title">{blogsPage ? 'My Blogs' : `Welcome back, ${getFirstName(user.name)}`}</h1>
+          <p className="dashboard__subtitle">{blogsPage ? 'Manage your published stories and works in progress.' : 'Here’s an overview of every story you’ve written.'}</p>
         </div>
         <Button to="/create-blog" variant="primary" size="lg">
           <Icon name="plus" size={18} />
@@ -108,7 +108,7 @@ export default function Dashboard() {
       <section className="posts-panel" aria-labelledby="posts-title">
         <div className="posts-panel__header">
           <h2 id="posts-title" className="posts-panel__title">
-            My Articles
+            {blogsPage ? 'All my articles' : 'Recent articles'}
           </h2>
           <div className="segmented" role="group" aria-label="Filter articles by status">
             {FILTERS.map((option) => (
@@ -160,7 +160,7 @@ export default function Dashboard() {
 
         {status === 'ready' && visiblePosts.length > 0 && (
           <ul className="post-list">
-            {visiblePosts.map((post) => {
+            {(blogsPage ? visiblePosts : visiblePosts.slice(0, 5)).map((post) => {
               const isPublished = post.status === 'published';
               return (
                 <li key={post.id} className="post-row">
@@ -174,6 +174,7 @@ export default function Dashboard() {
                     </Link>
                     <p className="post-row__meta">
                       <span>{post.category || 'Uncategorized'}</span>
+                      <span>Created {formatDate(post.createdAt)}</span>
                       <span aria-hidden="true">·</span>
                       <span>
                         {isPublished
@@ -225,6 +226,8 @@ export default function Dashboard() {
           </ul>
         )}
       </section>
+
+      {!blogsPage && posts.length > 5 && <Button to="/dashboard/blogs" variant="secondary">View all my blogs</Button>}
 
       <ConfirmDialog
         open={Boolean(postToDelete)}

@@ -19,7 +19,9 @@ export default function Login() {
   const location = useLocation();
 
   // Set by ProtectedRoute (page the user wanted) or Register (new account).
-  const redirectTo = location.state?.from ?? '/dashboard';
+  const intended = location.state?.from;
+  const redirectTo = typeof intended === 'string' && intended.startsWith('/') && !intended.startsWith('//')
+    ? intended : '/dashboard';
   const registeredEmail = location.state?.registeredEmail;
 
   const { values, setValues, touched, handleChange, handleBlur } = useFormState({
@@ -67,7 +69,7 @@ export default function Login() {
       subtitle="Log in to keep writing and manage your articles."
       footer={
         <>
-          New to Artikly? <Link to="/register">Create an account</Link>
+          New to Artikly? <Link to="/register" state={{ from: location.state?.from }}>Create an account</Link>
         </>
       }
     >

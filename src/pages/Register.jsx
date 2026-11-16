@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Alert from '../components/Alert';
 import AuthShell from '../components/AuthShell';
 import Button from '../components/Button';
@@ -17,6 +17,7 @@ import {
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { values, touched, handleChange, handleBlur } = useFormState({
     fullName: '',
@@ -45,7 +46,7 @@ export default function Register() {
     try {
       await register(values);
       // Send the new user to Login with their email pre-filled.
-      navigate('/login', { state: { registeredEmail: values.email.trim() } });
+      navigate('/login', { state: { registeredEmail: values.email.trim(), from: location.state?.from } });
     } catch (error) {
       setFormError(error.message);
       setSubmitting(false);
@@ -58,7 +59,7 @@ export default function Register() {
       subtitle="Join Artikly and give your ideas a voice."
       footer={
         <>
-          Already have an account? <Link to="/login">Log in</Link>
+          Already have an account? <Link to="/login" state={{ from: location.state?.from }}>Log in</Link>
         </>
       }
     >

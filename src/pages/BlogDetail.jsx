@@ -37,7 +37,7 @@ export default function BlogDetail() {
     return () => {
       ignore = true;
     };
-  }, [id]);
+  }, [id, user?.id]);
 
   if (!result || result.requestedId !== id) {
     return <LoadingState label="Loading article…" />;

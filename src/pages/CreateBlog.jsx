@@ -42,9 +42,9 @@ export default function CreateBlog() {
   async function handleSave(values) {
     const wasPublished = isEditing && loaded?.blog?.status === 'published';
     if (isEditing) {
-      await updateBlog(id, values, user.id);
+      await updateBlog(id, values);
     } else {
-      await createBlog(values, user);
+      await createBlog(values);
     }
 
     let message;
