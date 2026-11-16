@@ -7,9 +7,7 @@
 //   updateBlog(id, input)    -> PUT    /api/blogs/:id
 //   deleteBlog(id)           -> DELETE /api/blogs/:id
 //
-// The server identifies the author from the JWT, so the author/authorId
-// arguments the pages still pass are not needed and are ignored. Ownership is
-// enforced by the server (403 for someone else's article).
+// Ownership is always derived from the verified server session.
 
 import { apiRequest } from './apiClient';
 

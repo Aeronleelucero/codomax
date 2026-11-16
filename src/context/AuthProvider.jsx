@@ -1,54 +1,109 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { AuthContext } from './AuthContext';
 import * as authService from '../services/authService';
 import { SESSION_EXPIRED_EVENT } from '../services/apiClient';
+import { removeLegacyMockData } from '../services/session';
 
-// Holds the logged-in user for the whole app.
-// Components read it through the useAuth() hook.
 export function AuthProvider({ children }) {
-  // Read the saved session once, synchronously, so a page refresh keeps the
-  // user logged in without briefly showing the login page.
-  const [user, setUser] = useState(() => authService.getCurrentUser());
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
+  // Reject late bootstrap responses after login/logout or another validation.
+  const generation = useRef(0);
+  const channel = useRef(null);
 
-  // When any API call is rejected because the token expired or became
-  // invalid, apiClient clears the session and fires this event.
-  useEffect(() => {
-    const handleSessionExpired = () => setUser(null);
-    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
-    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+  const refreshSession = useCallback(async () => {
+    const version = ++generation.current;
+    setLoading(true);
+    setError('');
+    try {
+      const fresh = await authService.fetchCurrentUser();
+      if (version === generation.current) setUser(fresh);
+    } catch (failure) {
+      if (version === generation.current) {
+        setUser(null);
+        if (failure.status !== 401) setError(failure.message);
+      }
+    } finally {
+      if (version === generation.current) setLoading(false);
+    }
   }, []);
 
-  // On first load, confirm a stored session with the server once.
-  useEffect(() => {
-    if (!authService.getCurrentUser()) return;
-    authService
-      .fetchCurrentUser()
-      .then((freshUser) => setUser(freshUser))
-      .catch(() => {
-        // A rejected token is handled by the event above. Network errors keep
-        // the cached user so the app still works if the API is briefly down.
-      });
+  const clearUser = useCallback(() => {
+    generation.current += 1;
+    setUser(null);
+    setError('');
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    removeLegacyMockData();
+    // BroadcastChannel synchronizes tabs without writing auth data to storage.
+    if ('BroadcastChannel' in window) {
+      channel.current = new BroadcastChannel('artikly-auth');
+      channel.current.onmessage = (event) => {
+        if (event.data === 'logout') clearUser();
+        else refreshSession();
+      };
+    }
+    const expired = () => { setUser(null); setLoading(false); };
+    // Hide retained DOM before BFCache snapshots; unhide after restoring and
+    // force a fresh session check before protected children render.
+    const leaving = () => { document.documentElement.style.visibility = 'hidden'; };
+    const shown = (event) => {
+      if (event.persisted) flushSync(() => { refreshSession(); });
+      document.documentElement.style.visibility = '';
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, expired);
+    window.addEventListener('pagehide', leaving);
+    window.addEventListener('pageshow', shown);
+    // Schedule bootstrap from an external callback; initial state already loads.
+    const bootstrap = window.setTimeout(refreshSession, 0);
+    return () => {
+      window.clearTimeout(bootstrap);
+      generation.current += 1;
+      channel.current?.close();
+      channel.current = null;
+      window.removeEventListener(SESSION_EXPIRED_EVENT, expired);
+      window.removeEventListener('pagehide', leaving);
+      window.removeEventListener('pageshow', shown);
+    };
+  }, [refreshSession, clearUser]);
 
   const login = useCallback(async (credentials) => {
-    const loggedInUser = await authService.login(credentials);
-    setUser(loggedInUser);
-    return loggedInUser;
+    const fresh = await authService.login(credentials);
+    generation.current += 1;
+    setUser(fresh);
+    setLoading(false);
+    setError('');
+    channel.current?.postMessage('refresh');
+    return fresh;
   }, []);
-
-  // Registration creates the account but does not log in; the user is sent to
-  // the Login page afterwards.
   const register = useCallback((details) => authService.register(details), []);
-
-  const logout = useCallback(() => {
-    authService.logout();
-    setUser(null);
+  const logout = useCallback(async () => {
+    setLoggingOut(true);
+    try {
+      await authService.logout();
+      clearUser();
+      channel.current?.postMessage('logout');
+    } finally { setLoggingOut(false); }
+  }, [clearUser]);
+  const updateProfile = useCallback(async (details) => {
+    const fresh = await authService.updateProfile(details);
+    setUser(fresh);
+    channel.current?.postMessage('refresh');
+    return fresh;
   }, []);
+  const changePassword = useCallback(async (details) => {
+    await authService.changePassword(details);
+    clearUser();
+    channel.current?.postMessage('logout');
+  }, [clearUser]);
 
-  const value = useMemo(
-    () => ({ user, isAuthenticated: Boolean(user), login, register, logout }),
-    [user, login, register, logout],
-  );
-
+  const value = useMemo(() => ({ user, loading, error, loggingOut, refreshSession,
+    isAuthenticated: Boolean(user), login, register, logout, updateProfile, changePassword }),
+    [user, loading, error, loggingOut, refreshSession, login, register, logout, updateProfile, changePassword]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

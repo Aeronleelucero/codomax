@@ -36,7 +36,7 @@ export function countWords(text) {
 
 function validateEmailField(email) {
   if (!email.trim()) return 'Email is required.';
-  if (!isValidEmail(email)) return 'Enter a valid email address, like name@example.com.';
+  if (email.trim().length > 255 || !isValidEmail(email)) return 'Enter a valid email address, like name@example.com.';
   return null;
 }
 
@@ -52,7 +52,7 @@ export function validateRegister({ fullName, email, password, confirmPassword })
   const errors = {};
 
   if (!fullName.trim()) errors.fullName = 'Full name is required.';
-  else if (fullName.trim().length < 2) errors.fullName = 'Name must be at least 2 characters.';
+  else if (fullName.trim().length < 2 || fullName.trim().length > 255) errors.fullName = 'Name must be between 2 and 255 characters.';
 
   const emailError = validateEmailField(email);
   if (emailError) errors.email = emailError;
@@ -61,6 +61,8 @@ export function validateRegister({ fullName, email, password, confirmPassword })
     errors.password = 'Password is required.';
   } else if (password.length < PASSWORD_MIN_LENGTH) {
     errors.password = `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
+  } else if (new TextEncoder().encode(password).length > 72) {
+    errors.password = 'Password must be 72 bytes or fewer.';
   } else if (!/[a-z]/i.test(password) || !/\d/.test(password)) {
     errors.password = 'Password must include at least one letter and one number.';
   }

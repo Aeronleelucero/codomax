@@ -1,18 +1,8 @@
-// The single place where the frontend talks to the Artikly REST API.
-//
-// - Adds the JWT from the current session as "Authorization: Bearer <token>".
-// - Returns the `data` part of a successful response.
-// - Throws ApiError with the server's message (and field errors) otherwise.
-// - When the server rejects our token (401), clears the session and fires
-//   SESSION_EXPIRED_EVENT so AuthProvider can log the user out everywhere.
-
-import { clearSession, readSession } from './session';
-
-// In development Vite proxies "/api" to the backend (see vite.config.js).
-// For other setups, set VITE_API_URL, e.g. https://api.example.com/api
+// All API traffic uses HttpOnly session cookies. CSRF values live in memory.
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
-
 export const SESSION_EXPIRED_EVENT = 'artikly:session-expired';
+let csrfPromise;
+let csrfExpiresAt = 0;
 
 export class ApiError extends Error {
   constructor(message, status, errors) {
@@ -22,41 +12,42 @@ export class ApiError extends Error {
     this.errors = errors ?? {};
   }
 }
+export function resetCsrf() { csrfPromise = undefined; csrfExpiresAt = 0; }
 
-export async function apiRequest(path, { method = 'GET', body } = {}) {
-  const token = readSession()?.token;
-  const headers = { Accept: 'application/json' };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
-  if (token) headers.Authorization = `Bearer ${token}`;
-
+async function request(path, options) {
   let response;
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
-      method,
-      headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
+    response = await fetch(`${API_BASE_URL}${path}`, { credentials: 'include', cache: 'no-store', ...options });
   } catch {
-    throw new ApiError(
-      "We can't reach the Artikly server right now. Please check that it's running and try again.",
-      0,
-    );
+    throw new ApiError("We can't reach the Artikly server right now. Please try again.", 0);
   }
-
   const payload = await response.json().catch(() => null);
-
   if (!response.ok) {
-    if (response.status === 401 && token) {
-      clearSession();
+    // Invalid login credentials must not end an unrelated current session.
+    if (response.status === 401 && path !== '/auth/login') {
+      resetCsrf();
       window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
     }
-    const message =
-      payload?.message ??
-      (response.status >= 500
-        ? 'The server ran into a problem. Please try again in a moment.'
-        : `Request failed (${response.status}).`);
-    throw new ApiError(message, response.status, payload?.errors);
+    if (response.status === 403) resetCsrf();
+    throw new ApiError(payload?.message || `Request failed (${response.status}).`, response.status, payload?.errors);
   }
-
   return payload?.data ?? {};
+}
+async function getCsrf() {
+  if (csrfExpiresAt && Date.now() >= csrfExpiresAt) resetCsrf();
+  if (!csrfPromise) {
+    csrfPromise = request('/auth/csrf', { headers: { Accept: 'application/json' } })
+      .then(({ csrfToken }) => {
+        csrfExpiresAt = Number(csrfToken.split('.')[0]) + 60 * 60 * 1000;
+        return csrfToken;
+      })
+      .catch((error) => { resetCsrf(); throw error; });
+  }
+  return csrfPromise;
+}
+export async function apiRequest(path, { method = 'GET', body } = {}) {
+  const headers = { Accept: 'application/json' };
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = await getCsrf();
+  return request(path, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
 }
