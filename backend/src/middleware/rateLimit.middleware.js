@@ -1,40 +1,36 @@
-// Minimal in-memory limiter for brute-force protection on auth routes.
-//
-// Only FAILED requests (status >= 400) count, so normal users are never
-// blocked. Limits reset when the server restarts and are per server process;
-// a multi-server deployment would use a shared store (e.g. Redis) instead.
+import { createHmac } from 'node:crypto';
+import { env } from '../config/env.js';
+import { reserveAttempt, releaseAttempt } from '../models/rateLimit.model.js';
+import { logFailure } from '../utils/logger.js';
 
-export function limitFailedAttempts({ max = 10, windowMs = 15 * 60 * 1000 } = {}) {
-  const attempts = new Map(); // key -> { count, resetAt }
-
-  return (req, res, next) => {
-    const key = `${req.ip}:${req.baseUrl}${req.path}`;
-    const now = Date.now();
-    let entry = attempts.get(key);
-
-    if (!entry || entry.resetAt <= now) {
-      entry = { count: 0, resetAt: now + windowMs };
-      attempts.set(key, entry);
+export function limitFailedAttempts({ max = 10, accountMax = 30, windowMs = 15 * 60 * 1000 } = {}) {
+  return async (req, res, next) => {
+    const route = req.path;
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase().slice(0, 255) : '';
+    const identities = [['ip', req.ip, route, max]];
+    // Also throttle distributed password guessing against the same account.
+    if (route === '/login' && email) identities.push(['account', email, route, accountMax]);
+    const reservations = [];
+    try {
+      for (const [scope, identity, path, limit] of identities) {
+        const key = createHmac('sha256', env.session.secret).update(JSON.stringify([scope, identity, path])).digest('hex');
+        const slot = await reserveAttempt(key, limit, windowMs);
+        if (!slot.allowed) {
+          res.set('Retry-After', String(slot.retryAfter));
+          return res.status(429).json({ success: false, message: 'Too many failed attempts. Please try again later.' });
+        }
+        reservations.push({ key, resetAt: slot.resetAt });
+      }
+    } catch {
+      logFailure('rate_limit_unavailable');
+      return res.status(503).json({ success: false, message: 'Authentication is temporarily unavailable.' });
     }
-
-    if (entry.count >= max) {
-      const retryAfterSeconds = Math.ceil((entry.resetAt - now) / 1000);
-      res.set('Retry-After', String(retryAfterSeconds));
-      return res.status(429).json({
-        success: false,
-        message: `Too many failed attempts. Please try again in ${Math.ceil(retryAfterSeconds / 60)} minute(s).`,
-      });
-    }
-
     res.on('finish', () => {
-      if (res.statusCode >= 400) entry.count += 1;
+      if (res.statusCode < 400) {
+        Promise.all(reservations.map(({ key, resetAt }) => releaseAttempt(key, resetAt)))
+          .catch(() => logFailure('rate_limit_unavailable'));
+      }
     });
-
-    // Drop expired entries now and then so the map can't grow forever.
-    if (attempts.size > 10_000) {
-      for (const [k, v] of attempts) if (v.resetAt <= now) attempts.delete(k);
-    }
-
     next();
   };
 }
