@@ -1,0 +1,9 @@
+.profile-page { max-width: 1100px; margin-inline: auto; }
+.profile-summary { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0 2rem; }
+.profile-summary p, .profile-card > p { color: var(--color-text-muted); font-size: .9rem; }
+.profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; align-items: start; }
+.profile-card { padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.profile-card h2 { font-size: 1.5rem; margin-bottom: .75rem; }
+.profile-card form { display: grid; gap: 1.25rem; margin-top: 1.5rem; }
+.profile-card > [role="alert"] { margin-top: 1rem; }
+@media (max-width: 1050px) { .profile-grid { grid-template-columns: 1fr; } }
