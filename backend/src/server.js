@@ -1,4 +1,5 @@
 import app from './app.js';
+import { logFailure } from './utils/logger.js';
 import pool from './config/postgres.js';
 import { assertServerConfig, env } from './config/env.js';
 
@@ -36,8 +37,8 @@ const startServer = async () => {
     process.on('SIGINT', () => shutdown('SIGINT'));
     process.on('SIGTERM', () => shutdown('SIGTERM'));
 
-  } catch (error) {
-    console.error('Backend startup failed:', error.message);
+  } catch {
+    logFailure('startup_failed');
     await pool.end();
     process.exit(1);
   }

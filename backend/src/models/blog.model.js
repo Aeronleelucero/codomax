@@ -22,7 +22,7 @@ const SELECT_BLOG = `
 `;
 
 export const toBlog = (row) => ({
-  id: row.id,
+  id: String(row.id),
   title: row.title,
   excerpt: row.excerpt,
   content: row.content,
@@ -30,7 +30,7 @@ export const toBlog = (row) => ({
   coverImage: row.cover_image,
   status: row.status,
   featured: Boolean(row.is_featured),
-  authorId: row.author_id,
+  authorId: String(row.author_id),
   authorName: row.author_name,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -125,6 +125,7 @@ export const updateBlogById = async (
        category = $4,
        cover_image = $5,
        status = $6,
+       updated_at = CURRENT_TIMESTAMP,
        published_at = CASE
          WHEN $9::boolean = TRUE
          THEN COALESCE(published_at, CURRENT_TIMESTAMP)

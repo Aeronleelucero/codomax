@@ -1,4 +1,7 @@
 import express from 'express';
+import { productionSecurity } from './middleware/security.middleware.js';
+import { logFailure } from './utils/logger.js';
+import { requireCsrf } from './middleware/csrf.middleware.js';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes.js';
 import blogRoutes from './routes/blog.routes.js';
@@ -8,18 +11,25 @@ import healthRoutes from './routes/health.routes.js';
 import { AppError } from './utils/AppError.js';
 
 const app = express();
+app.disable('x-powered-by');
+if (env.trustProxy) app.set('trust proxy', env.trustProxy);
+app.use(productionSecurity);
 
 // Allow requests from the Artikly frontend.
 app.use(
   cors({
     origin: env.frontendUrls,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'X-CSRF-Token'],
+    credentials: true,
   })
 );
 
 // Parse incoming JSON requests.
 app.use(express.json({ limit: '1mb' }));
+
+// CSRF checks include login, registration, profile changes and logout.
+app.use('/api', requireCsrf);
 
 // API routes.
 app.use('/api/health', healthRoutes);
@@ -31,7 +41,7 @@ app.use('/api/blogs', blogRoutes);
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: `Route not found: ${req.method} ${req.originalUrl}`,
+    message: 'Route not found.',
   });
 });
 
@@ -61,13 +71,10 @@ app.use((err, req, res, next) => {
     });
   }
 
-  console.error(err);
+  logFailure('request_failed');
   res.status(500).json({
     success: false,
-    message:
-      env.nodeEnv === 'production'
-        ? 'Internal server error.'
-        : `Internal server error: ${err.message}`,
+    message: 'Internal server error.',
   });
 });
 
