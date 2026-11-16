@@ -1,7 +1,7 @@
 
 import dotenv from 'dotenv';
 
-dotenv.config({ quiet: true });
+dotenv.config({ path: new URL('../../.env', import.meta.url), quiet: true });
 
 export const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -26,10 +26,12 @@ export const env = {
   // Supabase PostgreSQL configuration.
   databaseUrl: process.env.DATABASE_URL,
 
-  jwt: {
-    secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+  session: {
+    secret: process.env.SESSION_SECRET || process.env.JWT_SECRET,
+    ttlHours: Number(process.env.SESSION_TTL_HOURS || 24),
+    secure: process.env.NODE_ENV === 'production',
   },
+  trustProxy: process.env.TRUST_PROXY_CIDRS?.split(',').map((s) => s.trim()).filter(Boolean) || Number(process.env.TRUST_PROXY_HOPS || 0),
 };
 
 export function assertServerConfig() {
@@ -39,8 +41,23 @@ export function assertServerConfig() {
     problems.push('DATABASE_URL must be configured.');
   }
 
-  if (!env.jwt.secret || env.jwt.secret.length < 32) {
-    problems.push('JWT_SECRET must be at least 32 characters.');
+  if (!env.session.secret || env.session.secret.length < 32) {
+    problems.push('SESSION_SECRET must be at least 32 characters.');
+  }
+
+  if (!Number.isFinite(env.session.ttlHours) || env.session.ttlHours <= 0 || env.session.ttlHours > 720) {
+    problems.push('SESSION_TTL_HOURS must be between 0 and 720 hours.');
+  }
+
+  if (typeof env.trustProxy === 'number' && (!Number.isInteger(env.trustProxy) || env.trustProxy < 0)) {
+    problems.push('TRUST_PROXY_HOPS must be a non-negative integer.');
+  }
+  if (env.nodeEnv === 'production') {
+    if (process.env.PGSSLMODE === 'disable') problems.push('Production database TLS must be enabled.');
+    if (!env.frontendUrls.length || env.frontendUrls.some((origin) => {
+      try { const url = new URL(origin); return url.protocol !== 'https:' || url.origin !== origin; }
+      catch { return true; }
+    })) problems.push('Production FRONTEND_URL must contain exact HTTPS origins.');
   }
 
   if (problems.length > 0) {
