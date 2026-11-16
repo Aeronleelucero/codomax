@@ -2,174 +2,119 @@
 
 **Every idea deserves a story.**
 
-Artikly is a creative writing and digital publishing platform: a simple, welcoming space to share ideas, publish articles and discover perspectives from other writers. It was built for the Datheon Full-Stack Development Internship.
-
-- **Frontend:** React 19 + Vite 8 (this folder)
-- **Backend:** Node.js + Express 5 REST API ([`backend/`](backend/), see [backend/README.md](backend/README.md))
-- **Database:** MariaDB / MySQL (developed on XAMPP's MariaDB 10.4)
+Artikly is a blogging application built with React 19, Vite 8, React Router 7, Express 5 and PostgreSQL/Supabase. The existing navy/lime theme, reading experience and article editor are preserved.
 
 ## Features
 
-**Reading**
-- Homepage with search, article categories, Featured Stories and Latest Stories
-- Search and category filters kept in the URL (`/?q=react&category=Design`)
-- Article pages with author, date, reading time and related stories
-- Responsive from 320px phones to wide desktops, with a mobile navigation menu
-
-**Writing**
-- Registration with validation and bcrypt password hashing (cost factor 12)
-- Login with JWT authentication (HS256, 1-day expiry)
-- Creator Dashboard with article statistics and status filters
-- Editor with Write/Preview modes, categories and cover images (URL or preset)
-- Save drafts (title only) or publish (requires description, category and at least 50 words)
-- Edit, unpublish and delete articles, with confirmation dialogs and an unsaved-changes warning
-
-**Security**
-- Passwords hashed with bcrypt and never returned by the API or stored in the browser
-- Parameterized SQL queries throughout
-- Ownership enforced on the server: writers can only change their own articles, and drafts are private
-- Login doesn't reveal which emails are registered, and failed attempts are rate-limited per IP
-- Expired or invalid tokens log the user out automatically
+- Public articles, category/search filters, featured stories and related articles.
+- Registration and login with bcrypt cost 12 and validation.
+- PostgreSQL-backed sessions in HttpOnly cookies; Secure host-prefixed cookies in production, SameSite=Lax, absolute expiry and server-side revocation.
+- Signed, session-bound CSRF tokens and per-IP failed-attempt limits.
+- Protected creator dashboard with total/published/draft statistics, recent articles and creation dates.
+- My Blogs at `/dashboard/blogs`, with status filtering, draft preview, editing and confirmed deletion.
+- Full article editor with preview, categories, image URLs/presets, draft saving and publishing validation.
+- Profile settings at `/dashboard/profile`: edit name/email and change passwords after verifying the current password. The existing initials avatar follows the user's name.
+- Server-side blog ownership and private draft enforcement; body/query IDs never determine ownership.
+- Refresh persistence, intended login destinations, logout to `/login`, tab synchronization and revalidation on browser history restoration.
+- Responsive layouts, accessible fields, loading/empty/error states and toast notifications.
 
 ## Quick start
 
-### 1. Database (XAMPP)
+Use a PostgreSQL database or your existing Supabase database. No MySQL service is needed for normal operation.
 
 ```bash
-sudo /opt/lampp/lampp startmysql
-```
-
-Create the `artikly_db` database and an `artikly_user` account with privileges on `artikly_db` only (for example in DBeaver).
-
-### 2. Backend
-
-```bash
+# Backend
 cd backend
 npm install
-cp .env.example .env      # then fill in DB_PASSWORD and a random JWT_SECRET
-npm run db:test           # check the database connection
-npm run db:migrate        # create tables (safe to re-run)
-npm run db:seed           # demo account + sample articles (safe to re-run)
-npm run dev               # http://localhost:5000/api
+cp .env.example .env
+# Configure DATABASE_URL, SESSION_SECRET and FRONTEND_URL in .env.
+# Remove PGSSLMODE=disable when using Supabase/production.
+npm run db:test
+npm run db:migrate
+npm run dev                 # http://localhost:5000/api
 ```
 
-### 3. Frontend
-
-In a second terminal, from the project root:
+In another terminal:
 
 ```bash
+# Repository root
 npm install
-npm run dev               # http://localhost:5173
+npm run dev                 # http://localhost:5173
 ```
 
-In development, Vite forwards `/api/*` to the backend at `http://localhost:5000`, so no CORS setup is needed whatever port Vite uses. To use a different backend address, start Vite with `API_PROXY_TARGET=http://localhost:5001 npm run dev`, or set `VITE_API_URL` (see `.env.example`).
+Vite proxies `/api` to the backend. Use `API_PROXY_TARGET=http://localhost:5001 npm run dev` for another backend port. Include the actual browser origin in `FRONTEND_URL` if Vite selects another port. For production, serve React and `/api` on the same site over HTTPS; set `NODE_ENV=production`. The frontend HTML should be served with `Cache-Control: no-store` and React route fallback enabled.
 
-### Demo account
+Optional `npm run db:seed` from `backend/` adds the existing demo account and sample articles without overwriting existing data. The Login page's demo action is retained. Keep seeded demo accounts out of publicly accessible production installations.
 
-| Email              | Password     |
-| ------------------ | ------------ |
-| `demo@artikly.dev` | `artikly123` |
+## Authentication and database upgrade
 
-Created by `npm run db:seed`. The Login page has a **Use demo account** button.
+The app now uses opaque server-side sessions instead of browser-stored JWTs. On login the server sets a random session cookie and stores only its hash in `user_sessions`. Every private API request loads the verified user from PostgreSQL. React checks `/api/auth/me` on startup before rendering protected pages, so refreshes retain login without trusting cached user data.
 
-## Commands
+Mutating requests first obtain an in-memory CSRF value from `/api/auth/csrf`, then send it with the HttpOnly cookies. Logout deletes the server session. A password change atomically updates the bcrypt hash and deletes all sessions for that account. This cookie design follows [OWASP session guidance](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html).
 
-| Where      | Command              | What it does                          |
-| ---------- | -------------------- | ------------------------------------- |
-| `/`        | `npm run dev`        | Frontend dev server                   |
-| `/`        | `npm run build`      | Production build into `dist/`         |
-| `/`        | `npm run preview`    | Serve the build (also proxies `/api`) |
-| `/`        | `npm run lint`       | ESLint for frontend **and** backend   |
-| `backend/` | `npm run dev`        | API with auto-restart (nodemon)       |
-| `backend/` | `npm start`          | API without auto-restart              |
-| `backend/` | `npm run db:test`    | Check the database connection         |
-| `backend/` | `npm run db:migrate` | Apply `database/schema.sql`           |
-| `backend/` | `npm run db:seed`    | Insert demo user and sample articles  |
+Run `npm run db:migrate` in `backend/` before starting this version. The additive PostgreSQL migration in `backend/database/postgres.sql` creates missing tables and session indexes without removing existing users or blogs. It also enables row-level security to deny direct Supabase browser-role access; the Express database role must own the tables or have BYPASSRLS and the required table privileges. Existing passwords remain valid; previous JWT users must log in again. `SESSION_SECRET` replaces `JWT_SECRET` (the old name is temporarily supported as a fallback). `JWT_EXPIRES_IN` is no longer used. Sessions expire after `SESSION_TTL_HOURS`, default 24.
 
-## Frontend routes
+The previous MySQL schema and import script are retained for legacy migration use. The runtime models, database check, schema migration and seed now consistently target PostgreSQL. PostgreSQL TLS certificates are verified by default; local databases can use `PGSSLMODE=disable`. Use `PGSSLROOTCERT` for a provider CA, or export `NODE_EXTRA_CA_CERTS` before starting Node.
 
-| Route            | Page              | Access                                |
-| ---------------- | ----------------- | ------------------------------------- |
-| `/`              | Home              | Public                                |
-| `/blog/:id`      | Article           | Public (drafts: author only)          |
-| `/login`         | Log in            | Guests only                           |
-| `/register`      | Create an account | Guests only                           |
-| `/dashboard`     | Creator Dashboard | Logged-in users                       |
-| `/create-blog`   | Write an Article  | Logged-in users                       |
-| `/edit-blog/:id` | Edit Article      | Logged-in users (own articles only)   |
-| `*`              | 404 Not Found     | Public                                |
+## Routes
 
-## API overview
+| Route | Access |
+| --- | --- |
+| `/` | Public article listing |
+| `/blog/:id` | Public for published articles; author only for drafts |
+| `/login`, `/register` | Guests |
+| `/dashboard` | Authenticated overview and recent posts |
+| `/dashboard/blogs` | Authenticated user's blogs |
+| `/dashboard/profile` | Authenticated user's profile/password settings |
+| `/create-blog` | Authenticated editor |
+| `/edit-blog/:id` | Authenticated owner only |
 
-| Method | Endpoint             | Auth     | Purpose                         |
-| ------ | -------------------- | -------- | ------------------------------- |
-| GET    | `/api/health`        | –        | API and database status         |
-| POST   | `/api/auth/register` | –        | Create an account               |
-| POST   | `/api/auth/login`    | –        | Log in and receive a JWT        |
-| GET    | `/api/auth/me`       | Bearer   | Current user                    |
-| GET    | `/api/blogs`         | –        | Published articles              |
-| GET    | `/api/blogs/mine`    | Bearer   | The current user's articles     |
-| GET    | `/api/blogs/:id`     | Optional | One article (drafts: author only) |
-| POST   | `/api/blogs`         | Bearer   | Create a draft or publish       |
-| PUT    | `/api/blogs/:id`     | Bearer   | Update (author only)            |
-| DELETE | `/api/blogs/:id`     | Bearer   | Delete (author only)            |
+Private APIs enforce authentication independently of React guards. See [backend/README.md](backend/README.md) for the full endpoint contract, request/response shapes, environment variables and deployment requirements.
 
-Request and response details are in [backend/README.md](backend/README.md).
+New API routes: `GET /api/auth/csrf`, `POST /api/auth/logout`, `PATCH /api/auth/profile`, `PUT /api/auth/password`. Existing auth/blog routes now use session cookies and CSRF protection rather than bearer tokens. IDs are returned as strings to preserve PostgreSQL BIGINT precision.
+
+## Commands and verification
+
+```bash
+npm run dev                   # frontend
+npm run build                 # production frontend build
+npm run preview               # serve frontend build
+npm run lint                  # frontend and backend ESLint
+npm test --prefix backend     # API security/ownership regression suite
+npm run dev --prefix backend  # API with auto-restart
+npm start --prefix backend    # API
+npm run db:test --prefix backend
+npm run db:migrate --prefix backend
+```
+
+The default API suite uses real HTTP, Express, bcrypt and application code with an in-memory repository double; it does not connect to the configured application database. To verify actual PostgreSQL queries and migration behavior in a temporary schema:
+
+```bash
+TEST_DATABASE_URL='postgresql://...' npm test --prefix backend
+```
+
+Use a dedicated test database with schema creation permission. For local PostgreSQL also set `TEST_PGSSLMODE=disable`. Optional Chromium tests are in `tests/browser.mjs`; setup and commands are documented in [backend/README.md](backend/README.md#verification).
 
 ## Architecture
 
 ```text
-React page ──► services/authService.js, blogService.js ──► services/apiClient.js ──fetch──►
-  /api (Vite proxy) ──► Express routes ──► controllers ──► services ──► models ──► MariaDB
+React pages/components → services/apiClient.js (cookies + CSRF)
+  → Express routes → controllers → services → SQL models → PostgreSQL
 ```
 
-**Frontend (`src/`)**
-- `pages/`, `components/` and `layouts/` contain the UI. They never call `fetch` or `localStorage` directly.
-- `services/apiClient.js` is the only code that calls the API. It attaches the JWT, turns errors into readable messages, and fires a session-expired event on 401.
-- `services/session.js` is the only code that stores the session (token and public user info) in `localStorage`.
-- `context/AuthProvider.jsx` holds the logged-in user, checks the stored token on load, and logs out when the session expires.
+Authentication state stays in React memory. Browser storage is only read to delete obsolete localStorage sessions and legacy mock data. Password hashes and session secrets never appear in API user responses. Blog content is rendered as React text instead of injected HTML.
 
-**Backend (`backend/src/`)**: MVC style
-- `routes/` map URLs to controllers and attach `requireAuth` or `optionalAuth`.
-- `controllers/` handle HTTP only: read the request, call a service, send JSON.
-- `services/` hold business rules: validation, hashing, tokens, ownership.
-- `models/` contain parameterized SQL and map rows to API objects.
-- `utils/AppError.js` carries expected errors (400/401/403/404/409), and a central error handler in `app.js` turns them into JSON.
+## Current limits
 
-## Project structure
+- Rate limits are in memory per API process. Use a shared edge limiter or store for multi-instance deployments.
+- Profile images use the existing initials avatar; image uploads are not implemented.
+- Profile email changes require the current password, but there is no email-verification or password-reset service.
+- Public search/filtering runs in the browser; pagination can be added for larger datasets.
+- Production HTTPS, reverse proxy routing, trusted proxy count and cache headers must be configured by the deployment.
+- Real PostgreSQL tests require `TEST_DATABASE_URL`; use `TEST_PGSSLMODE=disable` for a local test server. The integration review verified PostgreSQL 17 tests and the Supabase migration; see AUTHENTICATION.md.
 
-```text
-├── backend/
-│   ├── database/
-│   │   ├── schema.sql         Tables (also runnable in DBeaver)
-│   │   └── seed/              Demo account, authors and sample articles
-│   └── src/
-│       ├── config/            env.js, db.js (connection pool), db.test.js
-│       ├── controllers/       auth.controller.js, blog.controller.js
-│       ├── database/          migrate.js, seed.js
-│       ├── middleware/        auth.middleware.js, rateLimit.middleware.js
-│       ├── models/            user.model.js, blog.model.js
-│       ├── routes/            health, auth, blog routes
-│       ├── services/          auth.service.js, blog.service.js
-│       ├── utils/             AppError.js, jwt.js, validators.js
-│       ├── app.js             Express app and error handling
-│       └── server.js          Startup (config check, DB check, listen)
-├── public/                    favicon.svg
-├── src/
-│   ├── components/  layouts/  pages/  context/  hooks/
-│   ├── services/              apiClient.js, session.js, authService.js, blogService.js
-│   ├── data/                  categories.js, users.js (demo credentials)
-│   └── utils/                 validation, formatting, search, content parsing, storage
-├── index.html
-├── vite.config.js             React plugin + /api proxy
-└── eslint.config.js           Browser rules for src/, Node rules for backend/
-```
+Full implementation decisions, verification results and the complete changed-file inventory are in [AUTHENTICATION.md](AUTHENTICATION.md).
 
-## Known limitations and next steps
+The PostgreSQL integration review resolved certificate trust using `PGSSLROOTCERT=certs/supabase-root-2021.crt`, verified the configured Supabase connection and applied the migration with existing records preserved. See [the updated verification report](AUTHENTICATION.md#postgresql-integration-review).
 
-- **Token storage.** The JWT is kept in `localStorage`, which scripts on the page can read. The app never renders user content as HTML, which limits the XSS risk. HTTP-only cookies would be stronger.
-- **No logout on the server or token refresh.** Logging out deletes the token in the browser, but a copied token stays valid until it expires (1 day).
-- **The rate limiter keeps counts in memory**, so they reset on restart and aren't shared between server instances. A shared store such as Redis would be needed for production.
-- **No HTTPS, security headers (e.g. `helmet`) or production deployment configuration yet.**
-- **Search and filtering run in the browser** over all published articles. Server-side search and pagination would be needed at larger scale.
-- **Cover images are URLs only**; uploads aren't supported.
+Production security configuration and the **pending shared-limiter migration** are documented in [deploy/PRODUCTION.md](deploy/PRODUCTION.md). The new backend requires that migration before rollout; live changes require approval.

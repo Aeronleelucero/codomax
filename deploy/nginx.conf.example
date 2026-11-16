@@ -1,0 +1,40 @@
+# Review domains, paths, certificates, and backend address before installation.
+# This example is for ONE edge proxy with Express reachable only from loopback.
+server {
+    listen 80;
+    server_name blog.example.com;
+    return 308 https://blog.example.com$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name blog.example.com;
+    ssl_certificate /etc/letsencrypt/live/blog.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/blog.example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    root /srv/artikly/dist;
+    index index.html;
+    client_max_body_size 1m;
+
+    # Do not log query strings, headers or bodies. Configure restricted retention.
+    access_log off;
+    error_log /var/log/nginx/artikly-error.log crit;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy no-referrer always;
+    add_header X-Frame-Options DENY always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests" always;
+    add_header Cache-Control no-store always;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Host blog.example.com;
+        # Overwrite client-supplied forwarding headers at the edge.
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host blog.example.com;
+        proxy_cache off;
+    }
+    location / { try_files $uri $uri/ /index.html; }
+}
