@@ -1,4 +1,6 @@
 import bcrypt from 'bcrypt';
+import pool from '../config/postgres.js';
+import { createSession, revokeSession } from '../models/session.model.js';
 import { createUser, findUserByEmail, getPublicUserById } from '../models/user.model.js';
 import { AppError, throwIfInvalid } from '../utils/AppError.js';
 import {
@@ -12,13 +14,13 @@ const SALT_ROUNDS = 12;
 
 // Shape returned to clients. Never includes password_hash.
 export const toPublicUser = (row) => ({
-  id: row.id,
+  id: String(row.id),
   name: row.full_name,
   email: row.email,
   createdAt: row.created_at,
 });
 
-function validateRegistration({ fullName, email, password, confirmPassword }) {
+export function validateRegistration({ fullName, email, password, confirmPassword }) {
   const errors = {};
 
   if (!fullName) errors.fullName = 'Full name is required.';
@@ -39,7 +41,7 @@ function validateRegistration({ fullName, email, password, confirmPassword }) {
   ) {
     errors.password = 'Password must be at least 8 characters and contain a letter and a number.';
   } else if (Buffer.byteLength(password, 'utf8') > PASSWORD_MAX_BYTES) {
-    errors.password = `Password must be ${PASSWORD_MAX_BYTES} characters or fewer.`;
+    errors.password = `Password must be ${PASSWORD_MAX_BYTES} bytes or fewer.`;
   }
 
   if (!confirmPassword) errors.confirmPassword = 'Please confirm your password.';
@@ -94,14 +96,15 @@ export const registerUser = async (body = {}) => {
 let dummyHashPromise;
 const getDummyHash = () => (dummyHashPromise ??= bcrypt.hash('artikly-timing-placeholder', SALT_ROUNDS));
 
-export const loginUser = async (body = {}) => {
+export const loginUser = async (body = {}, previousToken) => {
   const email = cleanString(body.email).toLowerCase();
   const password = typeof body.password === 'string' ? body.password : '';
 
   const errors = {};
   if (!email) errors.email = 'Email is required.';
-  else if (!isValidEmail(email)) errors.email = 'Please provide a valid email address.';
+  else if (email.length > 255 || !isValidEmail(email)) errors.email = 'Please provide a valid email address.';
   if (!password) errors.password = 'Password is required.';
+  else if (Buffer.byteLength(password, 'utf8') > PASSWORD_MAX_BYTES) errors.password = 'Password must be 72 bytes or fewer.';
   throwIfInvalid(errors, !email || !password ? 'Email and password are required.' : undefined);
 
   const user = await findUserByEmail(email);
@@ -115,5 +118,21 @@ export const loginUser = async (body = {}) => {
     throw new AppError(401, 'Incorrect email or password.');
   }
 
-  return toPublicUser(user);
+  // Lock the account while issuing a session so a simultaneous password change
+  // cannot leave a newly issued session authenticated with the old password.
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query('SELECT password_hash FROM users WHERE id = $1 FOR UPDATE', [user.id]);
+    if (!rows[0] || rows[0].password_hash !== user.password_hash) {
+      throw new AppError(401, 'Your credentials changed. Please log in again.');
+    }
+    await revokeSession(previousToken, client);
+    const session = await createSession(user.id, client);
+    await client.query('COMMIT');
+    return { user: toPublicUser(user), ...session };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally { client.release(); }
 };
