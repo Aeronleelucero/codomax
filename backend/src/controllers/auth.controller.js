@@ -1,38 +1,23 @@
 import { loginUser, registerUser } from '../services/auth.service.js';
-import { getTokenExpiry, signAccessToken } from '../utils/jwt.js';
+import { revokeSession } from '../models/session.model.js';
+import { cookieOptions, CSRF_COOKIE, readCookie, SESSION_COOKIE } from '../utils/cookies.js';
 
-// Express 5 leaves req.body undefined when no JSON body is sent, hence `?? {}`.
-
-export const register = async (req, res, next) => {
-  try {
-    const user = await registerUser(req.body ?? {});
-
-    return res.status(201).json({
-      success: true,
-      message: 'Account created successfully.',
-      data: { user },
-    });
-  } catch (error) {
-    next(error);
-  }
+export const register = async (req, res) => {
+  const user = await registerUser(req.body ?? {});
+  res.status(201).json({ success: true, message: 'Account created successfully.', data: { user } });
 };
-
-export const login = async (req, res, next) => {
-  try {
-    const user = await loginUser(req.body ?? {});
-    const token = signAccessToken(user.id);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Logged in successfully.',
-      data: { user, token, expiresAt: getTokenExpiry(token) },
-    });
-  } catch (error) {
-    next(error);
-  }
+export const login = async (req, res) => {
+  const { user, token, expiresAt } = await loginUser(req.body ?? {}, readCookie(req, SESSION_COOKIE));
+  res.cookie(SESSION_COOKIE, token, { ...cookieOptions, expires: expiresAt });
+  res.clearCookie(CSRF_COOKIE, cookieOptions);
+  res.json({ success: true, data: { user, expiresAt } });
 };
-
-// req.user is set by requireAuth.
+export const logout = async (req, res) => {
+  await revokeSession(readCookie(req, SESSION_COOKIE));
+  res.clearCookie(SESSION_COOKIE, cookieOptions);
+  res.clearCookie(CSRF_COOKIE, cookieOptions);
+  res.json({ success: true, message: 'Logged out successfully.' });
+};
 export const getMe = (req, res) => {
-  res.status(200).json({ success: true, data: { user: req.user } });
+  res.json({ success: true, data: { user: req.user } });
 };

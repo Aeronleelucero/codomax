@@ -34,5 +34,6 @@ export function countWords(text) {
 
 // Route parameters arrive as strings. Only positive whole numbers are valid ids.
 export function parseId(value) {
-  return /^[1-9]\d{0,18}$/.test(String(value)) ? Number(value) : null;
+  const id = String(value);
+  return /^[1-9]\d{0,18}$/.test(id) && BigInt(id) <= 9223372036854775807n ? id : null;
 }
