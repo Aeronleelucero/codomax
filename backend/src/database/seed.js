@@ -6,30 +6,29 @@
 
 import { randomBytes } from 'node:crypto';
 import bcrypt from 'bcrypt';
-import pool from '../config/db.js';
-import { env } from '../config/env.js';
+import pool from '../config/postgres.js';
 import { SEED_AUTHORS } from '../../database/seed/authors.js';
 import { SEED_ARTICLES } from '../../database/seed/articles.js';
 
 const SALT_ROUNDS = 12;
 
 async function ensureAuthor(author) {
-  const [[existing]] = await pool.query('SELECT id FROM users WHERE email = ?', [author.email]);
+  const { rows: [existing] } = await pool.query('SELECT id FROM users WHERE email = $1', [author.email]);
   if (existing) return { id: existing.id, created: false };
 
   // Authors without a known password get a random one that is never stored or shown.
   const password = author.password ?? randomBytes(32).toString('hex');
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-  const [result] = await pool.query(
-    'INSERT INTO users (full_name, email, password_hash) VALUES (?, ?, ?)',
+  const result = await pool.query(
+    'INSERT INTO users (full_name, email, password_hash) VALUES ($1, $2, $3) RETURNING id',
     [author.name, author.email, passwordHash],
   );
-  return { id: result.insertId, created: true };
+  return { id: result.rows[0].id, created: true };
 }
 
 async function ensureArticle(article, authorId) {
-  const [[existing]] = await pool.query(
-    'SELECT id FROM blogs WHERE author_id = ? AND title = ?',
+  const { rows: [existing] } = await pool.query(
+    'SELECT id FROM blogs WHERE author_id = $1 AND title = $2',
     [authorId, article.title],
   );
   if (existing) return false;
@@ -38,7 +37,7 @@ async function ensureArticle(article, authorId) {
     `INSERT INTO blogs
        (author_id, title, excerpt, content, category, cover_image, status, is_featured,
         published_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
     [
       authorId,
       article.title,
@@ -47,7 +46,7 @@ async function ensureArticle(article, authorId) {
       article.category,
       article.coverImage,
       article.status,
-      article.featured ? 1 : 0,
+      Boolean(article.featured),
       article.publishedAt ? new Date(article.publishedAt) : null,
       new Date(article.createdAt),
       new Date(article.updatedAt),
@@ -57,7 +56,7 @@ async function ensureArticle(article, authorId) {
 }
 
 try {
-  console.log(`Seeding "${env.db.name}"...`);
+  console.log('Seeding PostgreSQL demo data...');
   const authorIds = new Map();
   let usersCreated = 0;
   let articlesCreated = 0;

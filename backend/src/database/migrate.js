@@ -1,34 +1,45 @@
-// Applies backend/database/schema.sql to the configured database.
-// Usage (from backend/):  npm run db:migrate
-//
-// The schema only contains "CREATE TABLE IF NOT EXISTS" statements, so this
-// never drops or alters existing tables or data.
-
+// Additive migration, pinned to public; rollback on errors or row changes.
 import { readFile } from 'node:fs/promises';
-import pool from '../config/db.js';
-import { env } from '../config/env.js';
+import pool from '../config/postgres.js';
 
-const schemaUrl = new URL('../../database/schema.sql', import.meta.url);
-
+let client;
 try {
-  const sql = await readFile(schemaUrl, 'utf8');
-  const statements = sql
-    .split(/;\s*$/m) // statements end with ";" at the end of a line
-    .map((statement) => statement.replace(/^\s*--.*$/gm, '').trim())
-    .filter(Boolean);
-
-  console.log(`Applying ${statements.length} statement(s) to "${env.db.name}"...`);
-  for (const statement of statements) {
-    const tableName = statement.match(/CREATE TABLE IF NOT EXISTS (\w+)/i)?.[1] ?? 'statement';
-    await pool.query(statement);
-    console.log(`  ✓ ${tableName}`);
+  const sql = await readFile(new URL('../../database/postgres.sql', import.meta.url), 'utf8');
+  client = await pool.connect();
+  await client.query('BEGIN');
+  await client.query('SET LOCAL search_path = public');
+  await client.query("SET LOCAL lock_timeout = '10s'");
+  const { rows: [target] } = await client.query('SELECT current_database() AS database, current_schema() AS schema');
+  console.log('Migration target:', target);
+  const required = {
+    users: ['id', 'full_name', 'email', 'password_hash', 'created_at', 'updated_at'],
+    blogs: ['id', 'author_id', 'title', 'excerpt', 'content', 'category', 'cover_image', 'status', 'is_featured', 'published_at', 'created_at', 'updated_at'],
+  };
+  const fingerprints = {};
+  for (const [table, columns] of Object.entries(required)) {
+    const { rows } = await client.query("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=$1", [table]);
+    if (!rows.length) continue;
+    const missing = columns.filter((column) => !rows.some((row) => row.column_name === column));
+    if (missing.length) throw new Error(`Incompatible ${table} schema; missing columns: ${missing.join(', ')}`);
+    // Prevent concurrent writes while verifying exact preservation of all rows.
+    await client.query(`LOCK TABLE public.${table} IN SHARE ROW EXCLUSIVE MODE`);
+    fingerprints[table] = (await client.query(`SELECT count(*)::text AS count,
+      md5(COALESCE(string_agg(row_to_json(t)::text, '' ORDER BY id), '')) AS digest FROM public.${table} t`)).rows[0];
   }
-
-  const [tables] = await pool.query('SHOW TABLES');
-  console.log('Tables now in database:', tables.map((row) => Object.values(row)[0]).join(', '));
+  const limiterSql = await readFile(new URL('../../database/migrations/002-auth-rate-limits.sql', import.meta.url), 'utf8');
+  // Keep schema changes and verification in our single transaction.
+  await client.query(sql.replace(/^BEGIN;$/m, '').replace(/^COMMIT;$/m, ''));
+  await client.query(limiterSql);
+  for (const [table, before] of Object.entries(fingerprints)) {
+    const after = (await client.query(`SELECT count(*)::text AS count,
+      md5(COALESCE(string_agg(row_to_json(t)::text, '' ORDER BY id), '')) AS digest FROM public.${table} t`)).rows[0];
+    if (before.count !== after.count || before.digest !== after.digest) throw new Error(`Row preservation check failed for ${table}`);
+    console.log(`${table}: ${after.count} records preserved; full-row checksum unchanged.`);
+  }
+  await client.query('COMMIT');
+  console.log('PostgreSQL schema and session migration committed.');
 } catch (error) {
-  console.error('Migration failed:', error.message);
+  if (client) await client.query('ROLLBACK');
+  console.error('Migration failed:', error.code || error.name);
   process.exitCode = 1;
-} finally {
-  await pool.end();
-}
+} finally { client?.release(); await pool.end(); }
