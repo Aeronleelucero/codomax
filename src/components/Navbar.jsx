@@ -1,4 +1,4 @@
-import { startTransition, useState } from 'react';
+import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import Avatar from './Avatar';
 import Button from './Button';
@@ -9,7 +9,7 @@ import { useToast } from '../hooks/useToast';
 import './Navbar.css';
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, loggingOut } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -17,15 +17,14 @@ export default function Navbar() {
   // Close the mobile menu whenever a link inside it is used.
   const closeMenu = () => setMenuOpen(false);
 
-  function handleLogout() {
-    closeMenu();
-    // Same transition as the navigation so the current page never re-renders
-    // without a user before Home appears (see DashboardLayout).
-    startTransition(() => {
-      navigate('/');
-      logout();
-    });
-    showToast('You have been logged out.', 'info');
+  async function handleLogout() {
+    try {
+      await logout();
+      navigate('/login', { replace: true });
+      showToast('You have been logged out.', 'info');
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
   }
 
   function handleKeyDown(event) {
@@ -87,7 +86,7 @@ export default function Navbar() {
                   <Avatar name={user.name} size="sm" />
                   <span className="navbar__user-name">{user.name}</span>
                 </span>
-                <Button variant="outline-light" size="sm" onClick={handleLogout}>
+                <Button variant="outline-light" size="sm" onClick={handleLogout} disabled={loggingOut}>
                   <Icon name="logout" size={16} />
                   Log out
                 </Button>

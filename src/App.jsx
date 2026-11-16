@@ -11,6 +11,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import Register from './pages/Register';
+import Profile from './pages/Profile';
 import './App.css';
 
 // App.jsx only describes the routes. Each page lives in src/pages and each
@@ -41,6 +42,8 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="dashboard/blogs" element={<Dashboard key="blogs" blogsPage />} />
+            <Route path="dashboard/profile" element={<Profile />} />
             <Route path="create-blog" element={<CreateBlog />} />
             <Route path="edit-blog/:id" element={<CreateBlog />} />
           </Route>
